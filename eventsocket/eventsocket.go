@@ -549,6 +549,7 @@ func (r *Event) PrettyPrint() {
 }
 
 // PrettyPrint prints Event headers and body to the logger.
+// Assumes you are using a logger of course.
 func (r *Event) LogPrettyPrint() {
 	var keys []string
 	for k := range r.Header {
