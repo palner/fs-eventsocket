@@ -1,5 +1,7 @@
 # eventsocket
 
+**Forked from [fiorix/go-eventsocket](https://github.com/fiorix/go-eventsocket)**
+
 FreeSWITCH [Event Socket](http://wiki.freeswitch.org/wiki/Event_Socket) library
 for the [Go programming language](http://golang.org).
 
@@ -14,7 +16,7 @@ your own risk.
 
 Make sure $GOPATH is set, and use the following command to install:
 
-	go get github.com/fiorix/go-eventsocket/eventsocket
+	go get github.com/palner/fs-eventsocket/eventsocket
 
 The library is currently a single file, so feel free to drop into any project
 without bothering to install.
