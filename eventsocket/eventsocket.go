@@ -57,7 +57,7 @@ func newConnection(c net.Conn) *Connection {
 		conn:   c,
 		reader: bufio.NewReaderSize(c, bufferSize),
 		err:    make(chan error, 1),
-        	ret:    make(chan error, 1),
+		ret:    make(chan error, 1),
 		cmd:    make(chan *Event),
 		api:    make(chan *Event),
 		evt:    make(chan *Event, eventsBuffer),
@@ -332,11 +332,15 @@ func (h *Connection) Send(command string) (*Event, error) {
 	//if strings.IndexAny(command, "\r\n") > 0 {
 	//	return nil, errInvalidCommand
 	//}
-	fmt.Fprintf(h.conn, "%s\r\n\r\n", command)
 	var (
 		ev  *Event
 		err error
 	)
+	_, err = fmt.Fprintf(h.conn, "%s\r\n\r\n", command)
+	if err != nil {
+		return nil, err
+	}
+
 	select {
 	case err = <-h.ret:
 		return nil, err
