@@ -59,6 +59,7 @@ type Connection struct {
 	reader        *bufio.Reader
 	textreader    *textproto.Reader
 	err           chan error
+	ret           chan error
 	cmd, api, evt chan *Event
 }
 
@@ -68,6 +69,7 @@ func newConnection(c net.Conn) *Connection {
 		conn:   c,
 		reader: bufio.NewReaderSize(c, bufferSize),
 		err:    make(chan error, 1),
+		ret:    make(chan error, 1),
 		cmd:    make(chan *Event),
 		api:    make(chan *Event),
 		evt:    make(chan *Event, eventsBuffer),
@@ -192,7 +194,7 @@ func (h *Connection) readOne() bool {
 	case "command/reply":
 		reply := hdr.Get("Reply-Text")
 		if len(reply) > 1 && reply[:2] == "-E" {
-			h.err <- errors.New(reply[5:])
+			h.ret <- errors.New(reply[5:])
 			return true
 		}
 
@@ -205,7 +207,7 @@ func (h *Connection) readOne() bool {
 		h.cmd <- resp
 	case "api/response":
 		if len(resp.Body) > 1 && string(resp.Body[:2]) == "-E" {
-			h.err <- errors.New(string(resp.Body)[5:])
+			h.ret <- errors.New(string(resp.Body)[5:])
 			return true
 		}
 
@@ -360,14 +362,17 @@ func (h *Connection) Send(command string) (*Event, error) {
 	//if strings.IndexAny(command, "\r\n") > 0 {
 	//	return nil, errInvalidCommand
 	//}
-	fmt.Fprintf(h.conn, "%s\r\n\r\n", command)
 	var (
 		ev  *Event
 		err error
 	)
+	_, err = fmt.Fprintf(h.conn, "%s\r\n\r\n", command)
+	if err != nil {
+		return nil, err
+	}
 
 	select {
-	case err = <-h.err:
+	case err = <-h.ret:
 		return nil, err
 	case ev = <-h.cmd:
 		return ev, nil
@@ -446,7 +451,7 @@ func (h *Connection) SendMsg(m MSG, uuid, appData string) (*Event, error) {
 	)
 
 	select {
-	case err = <-h.err:
+	case err = <-h.ret:
 		return nil, err
 	case ev = <-h.cmd:
 		return ev, nil
