@@ -460,6 +460,48 @@ func (h *Connection) SendMsg(m MSG, uuid, appData string) (*Event, error) {
 	}
 }
 
+func (h *Connection) SendEvent(e string, m MSG, appData string) (*Event, error) {
+	b := bytes.NewBufferString("sendevent " + e)
+	b.WriteString("\n")
+	for k, v := range m {
+		// Make sure there's no \r or \n in the key, and value.
+		if strings.IndexAny(k, "\r\n") > 0 {
+			return nil, errInvalidCommand
+		}
+
+		if v != "" {
+			if strings.IndexAny(v, "\r\n") > 0 {
+				return nil, errInvalidCommand
+			}
+
+			b.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+		}
+	}
+
+	b.WriteString("\n")
+	if m["content-length"] != "" && appData != "" {
+		b.WriteString(appData)
+	}
+
+	if _, err := b.WriteTo(h.conn); err != nil {
+		return nil, err
+	}
+
+	var (
+		ev  *Event
+		err error
+	)
+
+	select {
+	case err = <-h.ret:
+		return nil, err
+	case ev = <-h.cmd:
+		return ev, nil
+	case <-time.After(timeoutPeriod):
+		return nil, errTimeout
+	}
+}
+
 // Execute is a shortcut to SendMsg with call-command: execute without UUID,
 // suitable for use on outbound event socket connections (acting as server).
 //
