@@ -2,7 +2,7 @@
 Copyright 2013 Alexandre Fiori
 Copyright 2024 The Palner Group, Inc. / Fred Posner
 
-Use of this source code is governed by a MIT license that can be
+Use of this source code is governed by a a BSD-style license that can be
 found in the LICENSE file.
 
 FreeSWITCH Event Socket library for the Go programming language.
