@@ -556,7 +556,13 @@ func (r *Event) String() string {
 // Get returns an Event value, or "" if the key doesn't exist.
 func (r *Event) Get(key string) string {
 	val, ok := r.Header[key]
-	if !ok || val == nil {
+	if !ok {
+		log.Println("eventsocket err G01")
+		return ""
+	}
+
+	if val == nil {
+		log.Println("eventsocket nil val G02")
 		return ""
 	}
 
