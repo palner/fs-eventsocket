@@ -557,12 +557,10 @@ func (r *Event) String() string {
 func (r *Event) Get(key string) string {
 	val, ok := r.Header[key]
 	if !ok {
-		log.Println("eventsocket err G02")
 		return ""
 	}
 
 	if val == nil {
-		log.Println("eventsocket nil val G03")
 		return ""
 	}
 
