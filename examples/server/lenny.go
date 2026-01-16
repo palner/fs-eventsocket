@@ -156,27 +156,6 @@ func handler(c *eventsocket.Connection) {
 	log.Println("[x] ending call")
 	c.Send("hangup")
 	c.Send("exit")
-
-	// listen:
-	//
-	//	_, err = c.Execute("wait_for_silence", "300 45 5 15000", true)
-	//	if err != nil {
-	//		log.Println(err)
-	//		c.Send("exit")
-	//	} else {
-	//		log.Println("[-] waiting for silence")
-	//	}
-	//
-	//	file := GetAmSound()
-	//	_, err = c.Execute("playback", appFolder+file, true)
-	//	if err != nil {
-	//		log.Println(err)
-	//		c.Send("exit")
-	//	} else {
-	//		log.Println("[-] played", file)
-	//	}
-	//
-	//	goto listen
 }
 
 func GetAmSound() string {
