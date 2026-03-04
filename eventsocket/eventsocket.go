@@ -1,6 +1,6 @@
 /*
 Copyright 2013 Alexandre Fiori
-Copyright 2024 The Palner Group, Inc. / Fred Posner
+Copyright 2024,2026 The Palner Group, Inc. / Fred Posner
 
 Use of this source code is governed by a a BSD-style license that can be
 found in the LICENSE file.
