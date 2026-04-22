@@ -536,6 +536,24 @@ func (h *Connection) ExecuteUUID(uuid, appName, appArg string) (*Event, error) {
 	}, uuid, "")
 }
 
+// ExecuteUUID is similar to Execute, but takes a UUID to allow filtering on events.
+func (h *Connection) ExecuteEventUUID(appName, appArg string, lock bool, uuid string) (*Event, error) {
+	var evlock string
+	if lock {
+		// Could be strconv.FormatBool(lock), but we don't want to
+		// send event-lock when it's set to false.
+		evlock = "true"
+	}
+
+	return h.SendMsg(MSG{
+		"call-command":     "execute",
+		"execute-app-name": appName,
+		"execute-app-arg":  appArg,
+		"event-lock":       evlock,
+		"Event-UUID":       uuid,
+	}, "", "")
+}
+
 // EventHeader represents events as a pair of key:value.
 type EventHeader map[string]interface{}
 
