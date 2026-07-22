@@ -460,6 +460,58 @@ func (h *Connection) SendMsg(m MSG, uuid, appData string) (*Event, error) {
 	}
 }
 
+// just like sendmsg but allows a timeout variable
+func (h *Connection) SendMsgTime(m MSG, uuid, appData string, timeOut time.Duration) (*Event, error) {
+	b := bytes.NewBufferString("sendmsg")
+	if uuid != "" {
+		// Make sure there's no \r or \n in the UUID.
+		if strings.IndexAny(uuid, "\r\n") > 0 {
+			return nil, errInvalidCommand
+		}
+
+		b.WriteString(" " + uuid)
+	}
+
+	b.WriteString("\n")
+	for k, v := range m {
+		// Make sure there's no \r or \n in the key, and value.
+		if strings.IndexAny(k, "\r\n") > 0 {
+			return nil, errInvalidCommand
+		}
+
+		if v != "" {
+			if strings.IndexAny(v, "\r\n") > 0 {
+				return nil, errInvalidCommand
+			}
+
+			b.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+		}
+	}
+
+	b.WriteString("\n")
+	if m["content-length"] != "" && appData != "" {
+		b.WriteString(appData)
+	}
+
+	if _, err := b.WriteTo(h.conn); err != nil {
+		return nil, err
+	}
+
+	var (
+		ev  *Event
+		err error
+	)
+
+	select {
+	case err = <-h.ret:
+		return nil, err
+	case ev = <-h.cmd:
+		return ev, nil
+	case <-time.After(timeOut):
+		return nil, errTimeout
+	}
+}
+
 func (h *Connection) SendEvent(e string, m MSG, appData string) (*Event, error) {
 	b := bytes.NewBufferString("sendevent " + e)
 	b.WriteString("\n")
@@ -536,7 +588,7 @@ func (h *Connection) ExecuteUUID(uuid, appName, appArg string) (*Event, error) {
 	}, uuid, "")
 }
 
-// ExecuteUUID is similar to Execute, but takes a UUID to allow filtering on events.
+// ExecuteEventUUID is similar to Execute, but takes a UUID to allow filtering on events.
 func (h *Connection) ExecuteEventUUID(appName, appArg string, lock bool, uuid string) (*Event, error) {
 	var evlock string
 	if lock {
@@ -552,6 +604,26 @@ func (h *Connection) ExecuteEventUUID(appName, appArg string, lock bool, uuid st
 		"event-lock":       evlock,
 		"Event-UUID":       uuid,
 	}, "", "")
+}
+
+// ExecuteEventUUIDTimeout is similar to ExecuteEventUUID, but takes a timeout variable.
+func (h *Connection) ExecuteEventUUIDTimeout(appName, appArg string, lock bool, uuid string, seconds time.Duration) (*Event, error) {
+	var evlock string
+	if lock {
+		// Could be strconv.FormatBool(lock), but we don't want to
+		// send event-lock when it's set to false.
+		evlock = "true"
+	}
+
+	timeoutSec := seconds * time.Second
+
+	return h.SendMsgTime(MSG{
+		"call-command":     "execute",
+		"execute-app-name": appName,
+		"execute-app-arg":  appArg,
+		"event-lock":       evlock,
+		"Event-UUID":       uuid,
+	}, "", "", timeoutSec)
 }
 
 // EventHeader represents events as a pair of key:value.
